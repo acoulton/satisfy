@@ -3,7 +3,7 @@
     "description": "Satis repo builder for non-composer packages",
     "homepage": "https://github.com/fitchlearning/satisfy",
     "type": "library",
-    "license": "proprietary",
+    "license": "Apache-2.0",
     "authors": [
         {
             "name": "Richard George",
