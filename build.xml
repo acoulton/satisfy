@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<project name="Satisfy" default="self-build">
+
+    <target name="self-build"
+            description="Set up own autoloader and fetch any dependencies"
+            >
+        <exec executable="composer" dir="${basedir}" failonerror="true">
+            <arg value="dump-autoload"/>
+        </exec>
+    </target>
+
+    <target name="phplint"
+            description="Perform syntax check of modified sourcecode files"
+            >
+        <apply executable="php" failonerror="true">
+            <arg value="-l"/>
+            <arg value="-n"/>
+            <fileset dir="${basedir}">
+                <include name="**/*.php"/>
+                <exclude name="vendor/"/>
+                <!-- Old code -->
+                <modified/>
+            </fileset>
+        </apply>
+    </target>
+
+</project>

@@ -1,0 +1,67 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Scans the list of git packages in packagelist.json for version-like tags, adds them to the repositories stanza in
+ * satis.json and outputs the result to satis.expanded.json (or STDOUT if no --output)
+ *
+ */
+function satisfy_print_usage()
+{
+    $usage = "\nUSAGE: satisfy --repofile satis.json --packagefile packagelist.json ";
+    $usage .= " [--output satis.expanded.json [--cachedays=7]]\n";
+    print $usage;
+}
+
+if (file_exists(dirname(dirname(dirname(__DIR__))) . '/autoload.php')) {
+    require(dirname(dirname(dirname(__DIR__))) . '/autoload.php');
+} else {
+    /** @noinspection PhpIncludeInspection */
+    require(dirname(__DIR__) . '/vendor/autoload.php');
+}
+
+$params = getopt(null, ['repofile:', 'packagefile:', 'output:', 'cachedays:']);
+
+$app = new \FitchLearning\Satisfy\Application();
+
+if (!(array_key_exists('repofile', $params) && array_key_exists('packagefile', $params))) {
+    satisfy_print_usage();
+    print("--repofile and --packagefile are both REQUIRED\n\n");
+    exit(1);
+}
+
+if (array_key_exists('cachedays', $params)) {
+    if (!array_key_exists('output', $params)) {
+        print("--cachedays depends on --output\n");
+        satisfy_print_usage();
+        exit(1);
+    }
+
+    $cacheForDays = $params['cachedays'];
+    if (!is_numeric($cacheForDays)) {
+        print("--cachedays requires a numeric argument\n\n");
+        satisfy_print_usage();
+        exit(1);
+    }
+
+    if (file_exists($params['output'])) {
+        // FIXME Always rebuild if either input file is newer than output file
+
+        $lastChange = filemtime($params['output']);
+        if (time() - $lastChange < ($cacheForDays * 24 * 3600)) {
+            print("\nsatisfy: Cache is valid; no update required\n\n");
+            exit(0);
+        }
+    }
+}
+
+$app->loadPackagesFromFile($params['packagefile']);
+$app->loadRepoDefinitionFromFile($params['repofile']);
+
+if (array_key_exists('output', $params)) {
+    $app->setOutputFile($params['output']);
+}
+
+print("\nScanning repos...\n");
+$app->run();
+print("\nDone\n");
