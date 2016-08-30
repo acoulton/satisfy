@@ -199,6 +199,13 @@ class Application
                     "reference" => $ref
                 ];
 
+                if ($downloadUrl = $this->getZipDownloadUrl($vcsUrl, $ref)) {
+                    $packageDefinition['dist'] = [
+                        'url'  => $downloadUrl,
+                        'type' => 'zip',
+                    ];
+                }
+
                 $foundPackages[] = [
                     "type" => "package",
                     "package" => $packageDefinition
@@ -208,6 +215,22 @@ class Application
         $repoDefinition['repositories'] = array_merge($repoDefinition['repositories'], $foundPackages);
 
         return $repoDefinition;
+    }
+    
+    /**
+     * @param string $vcsUrl
+     * @param string $ref
+     *
+     * @return string
+     */
+    protected function getZipDownloadUrl($vcsUrl, $ref)
+    {
+        if (preg_match('#https://github.com/([^/]+)/([^/]+?)(\.git)?$#', $vcsUrl, $matches)) {
+            // Build github zipball download URL where possible
+            return 'https://api.github.com/repos/'.$matches[1].'/'.$matches[2].'/zipball/'.$ref;
+        }
+
+        return NULL;
     }
 
     /**
