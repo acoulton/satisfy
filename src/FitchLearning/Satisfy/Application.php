@@ -178,6 +178,9 @@ class Application
             $refs = $this->getRemoteUrlRefs($vcsUrl);
 
             foreach ($refs as $version => $ref) {
+                if ( ! $this->shouldIncludeVersion($definition, $version)) {
+                    continue;
+                }
 
                 if (isset($definition['defaults'])) {
                     $packageDefinition = $definition['defaults'];
@@ -217,6 +220,27 @@ class Application
         return $repoDefinition;
     }
     
+    /**
+     * @param array  $definition
+     * @param string $version
+     *
+     * @return bool
+     */
+    protected function shouldIncludeVersion($definition, $version)
+    {
+        if ( ! isset($definition['minversion'])) {
+            return true;
+        }
+
+        if ( ! preg_match('#^(dev-)?([0-9\.]+)$#', $version, $matches)) {
+            // version is not a numeric version or branch, so can't be compared
+            return true;
+        }
+
+        $numeric_version = array_pop($matches);
+        return version_compare($numeric_version, $definition['minversion']) >= 0;
+    }
+
     /**
      * @param string $vcsUrl
      * @param string $ref
